@@ -25,3 +25,4 @@ xcuserdata
 
 # Carthage
 Carthage/
+/.DS_Store

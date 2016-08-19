@@ -232,4 +232,38 @@ public let HeimdallrErrorNotAuthorized = 2
             completion(.Failure(error))
         }
     }
+    
+    /// Returns a bool for if the access token expiry date is greater than now
+    public func isAccessTokenValid() -> Bool {
+        
+        if let accessToken = self.accessToken {
+            if let expiresAt = accessToken.expiresAt {
+                // If the access token expiry date is greater, its most likely still valid
+                if(expiresAt > NSDate()) {
+                    return true
+                } else {
+                    var isValid = false
+                    // If its not greater, lets try and use the refresh token
+                    if let refreshToken = accessToken.refreshToken {
+                        requestAccessToken(grant: .RefreshToken(refreshToken)) { result in
+                            result.analysis(ifSuccess: { (accessToken) in
+                                // We successfully used the refresh token and got a new access token
+                                print("Used the refresh token - Access Token is now valid")
+                                isValid = true
+                                }, ifFailure: { (error) in
+                                    // Using the refresh token didn't work. The user is going to have to log in again
+                                    print("We couldn't use the access token - User needs to log in again")
+                            })
+                        }
+                    }
+                    
+                    return isValid
+                }
+            }
+        }
+        
+        // Safety catch all just incase we make it this far - the user will have to log in
+        return false
+    }
+
 }
